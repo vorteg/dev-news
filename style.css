@@ -1,0 +1,87 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #1e293b;
+  color: white;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.search-section {
+  text-align: center;
+  padding: 1rem;
+}
+
+#searchInput {
+  max-width: 400px;
+  width: 90%;
+  padding: 0.7rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #1e293b;
+  color: #e5e7eb;
+  font-size: 1rem;
+}
+
+#postsContainer {
+  max-width: 900px;
+  margin: auto;
+  padding: 1rem;
+}
+
+.post-card {
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.post-card h2 {
+  margin-top: 0;
+  color: #93c5fd;
+}
+
+.post-card .date {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+}
+
+.btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 0.5rem;
+  text-decoration: none;
+}
+
+#pagination {
+  text-align: center;
+  padding: 1rem;
+}
+
+#pagination button {
+  margin: 0 0.3rem;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: #1e293b;
+  color: #e5e7eb;
+}
+
+#pagination .active {
+  background: #3b82f6;
+}
