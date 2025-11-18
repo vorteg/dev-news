@@ -22,14 +22,15 @@
   </p>
 
   <div class="article-meta">
-    <span class="tag tag--hot">multi-agent</span>
-    <span class="tag">LangGraph</span>
-    <span class="tag">MCP</span>
-    <span class="tag">Codex</span>
-    <span class="tag">Windsurf</span>
-  </div>
+  <a class="tag tag--hot" href="#multi-agent">multi-agent</a>
+  <a class="tag" href="#multi-agent">LangGraph</a>
+  <a class="tag" href="#mcp">MCP</a>
+  <a class="tag" href="#codex-windsurf">Codex</a>
+  <a class="tag" href="#codex-windsurf">Windsurf</a>
+  <a class="tag" href="#arquitectura-patrones">Arquitectura 2025</a>
+</div>
 
-  <section>
+  <section id="prompting">
     <h2>1. De “prompting” a diseño de sistemas evaluables</h2>
     <p>
       En 2023–2024 el foco estuvo en “prompt engineering”; en 2025 el juego real
@@ -63,7 +64,7 @@
     </p>
   </section>
 
-  <section>
+  <section id="multi-agent">
     <h2>2. LangGraph y el renacimiento de los sistemas multi-agente</h2>
     <p>
       El concepto de “multi-agente” existe desde hace tiempo, pero en 2025
@@ -102,7 +103,7 @@
     </p>
   </section>
 
-  <section>
+  <section  id="mcp">
     <h2>3. MCP: el “USB-C” para conectar LLMs con tus sistemas</h2>
     <p>
       Otro tema muy caliente es <strong>MCP (Model Context Protocol)</strong>, un
@@ -136,7 +137,7 @@
     </p>
   </section>
 
-  <section>
+  <section id="codex-windsurf">
     <h2>4. Tu stack hoy: Windsurf + Codex como “equipo” de desarrollo</h2>
     <p>
       Si ya estás pagando ChatGPT y usando herramientas tipo Windsurf,
@@ -209,6 +210,78 @@
       que el ecosistema.
     </p>
   </section>
+
+    <section id="arquitectura-patrones">
+    <h2>5. Arquitectura y patrones de software para equipos pequeños en 2025</h2>
+    <p>
+      La mayoría de los ejemplos “cool” de IA vienen de empresas gigantes, pero en la práctica
+      muchos equipos son de 2–6 personas que necesitan entregar valor cada pocas semanas.
+      Para ese contexto, los patrones que más están funcionando tienen en común algo simple:
+      <strong>arquitecturas poco exóticas, bien observables y fáciles de depurar</strong>.
+    </p>
+
+    <h3>5.1 Monolito modular + servicios de IA bien encapsulados</h3>
+    <p>
+      Para un equipo pequeño, un <strong>monolito modular</strong> (por ejemplo, una API en Django / Rails /
+      FastAPI / Nest) con límites de módulo claros suele ser más efectivo que un zoológico de
+      microservicios. La IA entra como:
+    </p>
+    <ul>
+      <li>Un <strong>servicio interno de LLM</strong> que expone endpoints tipo <code>/chat</code>, <code>/rag</code>, <code>/agent</code>.</li>
+      <li>Un <strong>módulo de integración</strong> que habla con proveedores externos (OpenAI, otro vendor, modelo on-premise).</li>
+      <li>Adaptadores thin (muy delgados) en el monolito que llaman a ese servicio, sin lógica de negocio duplicada.</li>
+    </ul>
+    <p>
+      Esto permite cambiar de modelo o de proveedor sin reescribir toda la app y mantiene la lógica
+      de negocio donde siempre debió estar: en tu código, no en el prompt.
+    </p>
+
+    <h3>5.2 RAG como “feature”, no como plataforma</h3>
+    <p>
+      El patrón de <strong>Retrieval-Augmented Generation</strong> (RAG) es casi obligatorio, pero
+      para un equipo pequeño es mejor verlo como <em>una capacidad concreta</em> (buscar en tus docs,
+      código, tickets) y no como una mega-plataforma.
+    </p>
+    <ul>
+      <li>Un índice vectorial sencillo (pgvector, Qdrant, Weaviate, Elasticsearch con dense vectors).</li>
+      <li>Uno o dos <strong>pipelines de ingestión</strong> pequeños y mantenibles (no 15 conectores medio rotos).</li>
+      <li>Una capa muy clara que decide <em>qué</em> se indexa, <em>cuándo</em> se refresca y <em>cómo</em> se trocean los documentos.</li>
+    </ul>
+    <p>
+      Lo importante es que puedas razonar fácilmente: “este error viene de que este doc fue indexado así y este chunk llegó al modelo”.
+    </p>
+
+    <h3>5.3 Servicio de orquestación de agentes</h3>
+    <p>
+      Si empiezas a usar LangGraph u otro framework multi-agente, en lugar de meter el grafo dentro
+      del monolito, un patrón que funciona bien es tener un <strong>“orchestrator service”</strong> separado:
+    </p>
+    <ul>
+      <li>El monolito recibe la petición del usuario y valida permisos / inputs.</li>
+      <li>El orquestador (LangGraph, por ejemplo) ejecuta el flujo multi-agente (investigar, llamar APIs, generar código, etc.).</li>
+      <li>El resultado vuelve al monolito, que hace la parte “aburrida” (persistir, notificar, emitir eventos).</li>
+    </ul>
+    <p>
+      Esto ayuda a que los cambios en tus agentes no rompan tu API pública y te permite iterar en el
+      grafo con más libertad.
+    </p>
+
+    <h3>5.4 Patrones de equipo: cómo no morir en la complejidad</h3>
+    <p>
+      A nivel de trabajo diario, algunas prácticas que están funcionando muy bien en equipos pequeños:
+    </p>
+    <ul>
+      <li><strong>Trunk-based development</strong> con ramas cortas y revisiones frecuentes (especialmente para cambios generados por la IA).</li>
+      <li><strong>Feature flags</strong> para nuevos flujos de IA: puedes habilitarlos solo para ti o para un subconjunto de usuarios.</li>
+      <li><strong>Infra como código mínima</strong> (Terraform, Pulumi o plantillas CloudFormation) pero sin sobredimensionar: 2–3 módulos bien cuidados.</li>
+      <li><strong>Observabilidad desde el día 1</strong>: logs de prompts, respuestas, IDs de conversación y, si puedes, métricas de calidad por flujo.</li>
+    </ul>
+    <p>
+      El objetivo no es montar la arquitectura perfecta, sino tener un sistema que puedas entender,
+      que soporte iteración rápida y donde los errores sean visibles y corregibles en horas, no en semanas.
+    </p>
+  </section>
+
 
   <p style="text-align:center; margin-top:2rem;">
     <a class="btn" href="../index.html">← Volver al inicio</a>
