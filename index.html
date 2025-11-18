@@ -1,1 +1,107 @@
-test
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dev-News: artículos de IA y arquitectura moderna</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Blog actualizado sobre LLMs, prompts, arquitectura de software y herramientas como Windsurf y Codex." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header>
+    <h1>Dev-News</h1>
+    <p>Noticias semanales sobre IA aplicada, LLMs y arquitectura moderna</p>
+  </header>
+
+  <section class="search-section">
+    <input id="searchInput" type="text" placeholder="Buscar artículos..." />
+  </section>
+
+  <main id="postsContainer"></main>
+
+  <div id="pagination"></div>
+
+  <footer>
+    <p>Generado con ayuda de LLMs. Sin humo, solo lo que sirve en producción.</p>
+  </footer>
+
+<script>
+const POSTS_PER_PAGE = 7;
+let allPosts = [];
+let filteredPosts = [];
+let currentPage = 1;
+
+async function loadPosts() {
+  const res = await fetch('posts/posts.json');
+  allPosts = await res.json();
+
+  // Ordenar del más nuevo al más viejo
+  allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  filteredPosts = allPosts;
+  renderPosts();
+  renderPagination();
+}
+
+function renderPosts() {
+  const container = document.getElementById('postsContainer');
+  container.innerHTML = "";
+
+  const start = (currentPage - 1) * POSTS_PER_PAGE;
+  const end = start + POSTS_PER_PAGE;
+
+  const postsToShow = filteredPosts.slice(start, end);
+
+  postsToShow.forEach(post => {
+    const el = document.createElement('article');
+    el.className = "post-card";
+
+    el.innerHTML = `
+      <h2>${post.title}</h2>
+      <p class="date">${post.date}</p>
+      <p>${post.description}</p>
+      <a class="btn" href="posts/${post.filename}">Leer artículo</a>
+    `;
+
+    container.appendChild(el);
+  });
+}
+
+function renderPagination() {
+  const pages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const container = document.getElementById('pagination');
+  container.innerHTML = "";
+
+  for (let i = 1; i <= pages; i++) {
+    const btn = document.createElement('button');
+    btn.innerText = i;
+    if (i === currentPage) btn.classList.add('active');
+
+    btn.addEventListener('click', () => {
+      currentPage = i;
+      renderPosts();
+      renderPagination();
+    });
+
+    container.appendChild(btn);
+  }
+}
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  const term = e.target.value.toLowerCase();
+  filteredPosts = allPosts.filter(post =>
+    post.title.toLowerCase().includes(term) ||
+    post.description.toLowerCase().includes(term)
+  );
+  
+  currentPage = 1;
+  renderPosts();
+  renderPagination();
+});
+
+loadPosts();
+</script>
+
+</body>
+</html>
