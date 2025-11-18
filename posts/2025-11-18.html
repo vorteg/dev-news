@@ -4,66 +4,219 @@
   <meta charset="UTF-8" />
   <title>LLMs en la práctica y arquitectura moderna – 18 nov 2025</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Cómo diseñar sistemas modernos con LLMs: LangGraph, MCP, Codex, Windsurf y patrones multi-agente usados hoy en producción." />
   <link rel="stylesheet" href="../style.css" />
 </head>
 
 <body>
-
 <header>
   <h1>LLMs en la práctica y arquitectura moderna</h1>
   <p>Edición del 18 de noviembre de 2025</p>
 </header>
 
 <main class="article-body">
+  <p class="date">
+    Esta edición está pensada para alguien que ya usa LLMs a diario y quiere
+    entender <strong>cómo se están montando los sistemas serios hoy</strong>: multi-agente,
+    protocolos estándar, y agentes de código como Codex trabajando sobre repos reales.
+  </p>
 
-<section class="post-card">
-<h2>1. Prompt & context engineering que sí funciona</h2>
-<p>La tendencia fuerte en 2025 es priorizar la ingeniería de contexto sobre los prompts mágicos...</p>
-<ul>
-  <li>Empieza simple.</li>
-  <li>Testea como si fuera código.</li>
-  <li>Separa instrucción de contexto.</li>
-  <li>Mide latencia y costo.</li>
-</ul>
-</section>
+  <div class="article-meta">
+    <span class="tag tag--hot">multi-agent</span>
+    <span class="tag">LangGraph</span>
+    <span class="tag">MCP</span>
+    <span class="tag">Codex</span>
+    <span class="tag">Windsurf</span>
+  </div>
 
-<section class="post-card">
-<h2>2. Elegir el LLM correcto</h2>
-<p>La selección de modelos debe enfocarse en tareas reales, no en hype...</p>
-<ul>
-  <li>Define el trabajo del modelo.</li>
-  <li>Compara 2–3 modelos, no 10.</li>
-  <li>Combina modelos para diferentes etapas.</li>
-</ul>
-</section>
+  <section>
+    <h2>1. De “prompting” a diseño de sistemas evaluables</h2>
+    <p>
+      En 2023–2024 el foco estuvo en “prompt engineering”; en 2025 el juego real
+      es <strong>diseñar sistemas que puedas medir y versionar</strong>. Un buen sistema
+      con LLMs no se define por tener un prompt ingenioso, sino por:
+    </p>
+    <ul>
+      <li>Un conjunto claro de <strong>tareas objetivo</strong> (use cases concretos).</li>
+      <li><strong>Métricas offline</strong> y tests automatizados para prompts y flujos.</li>
+      <li><strong>Telemetría en producción</strong>: qué pregunta el usuario, qué falló, qué se corrigió.</li>
+      <li>Un ciclo de <strong>mejora continua</strong> (prompt + retrieval + herramientas), no solo tuning de modelo.</li>
+    </ul>
+    <p>
+      En vez de inventar el “super prompt”, lo que se está haciendo en equipos
+      serios es algo mucho más aburrido (pero efectivo): guardar cada cambio de
+      prompt en Git, tener un <em>evaluation harness</em> y automatizar comparativas
+      entre versiones de flujo. Herramientas como suites de evaluación para
+      RAG y agentes (por ejemplo, RAGAS o DeepEval) se usan justo para eso:
+      romper la ilusión de que “se siente bien” y ver qué tanto mejora realmente.
+    </p>
+    <p>
+      Una regla útil para tu día a día: si no puedes escribir en una frase
+      qué métrica quieres mover con ese cambio (precisión, latencia, coste,
+      tasa de alucinación…), probablemente todavía estás “jugando” con el modelo
+      en vez de diseñar un sistema.
+    </p>
+    <p class="article-links">
+      Lecturas sugeridas:
+      <a href="https://www.ragas.io/" target="_blank" rel="noopener">RAGAS: evaluación de RAG</a>,
+      <a href="https://docs.deepeval.com/" target="_blank" rel="noopener">DeepEval: evals para LLMs</a>.
+    </p>
+  </section>
 
-<section class="post-card">
-<h2>3. Arquitectura moderna + IA</h2>
-<p>Los LLMs se integran como componentes dentro de sistemas distribuidos...</p>
-<ul>
-  <li>LLM como servicio interno.</li>
-  <li>RAG bien diseñado.</li>
-  <li>Orquestación con LangChain / LangGraph.</li>
-  <li>MCP como interfaz estándar.</li>
-</ul>
-</section>
+  <section>
+    <h2>2. LangGraph y el renacimiento de los sistemas multi-agente</h2>
+    <p>
+      El concepto de “multi-agente” existe desde hace tiempo, pero en 2025
+      está encontrando una forma bastante concreta en producción gracias a
+      frameworks como <strong>LangGraph</strong>. La idea clave: describir tu aplicación
+      de IA como un <strong>grafo de estados y agentes</strong>, no como un solo “chat gigante”.
+    </p>
+    <p>
+      Según análisis recientes sobre LangGraph en sistemas de producción, el
+      framework se usa para orquestar:
+    </p>
+    <ul>
+      <li>Agentes especializados (investigación, código, redacción) coordinados por un supervisor.</li>
+      <li>Flujos con ciclos, <em>backtracking</em> y condiciones explícitas, no solo cadenas lineales.</li>
+      <li>Memoria persistente y trazas detalladas por cada nodo del grafo.</li>
+    </ul>
+    <p>
+      Un patrón muy común es el <strong>Supervisor Pattern</strong>: un agente central
+      recibe la petición, decide qué subagentes participan (p.ej. uno de
+      investigación y otro de código) y va consolidando los resultados. Esto
+      hace mucho más fácil depurar y poner límites claros sobre qué puede
+      hacer cada agente, en vez de tener un único modelo “todopoderoso”
+      que lo hace todo de forma implícita.
+    </p>
+    <p>
+      Para flujos tipo “investiga → prototipa código → genera documentación”,
+      este modelo de grafo multi-agente es claramente superior a los
+      <em>pipelines</em> lineales: puedes reintentar solo un nodo, cambiar un agente,
+      o incluso enchufar otro proveedor de modelo sin reescribir toda la app.
+    </p>
+    <p class="article-links">
+      Lecturas sugeridas:
+      <a href="https://www.emergentmind.com/topics/langgraph" target="_blank" rel="noopener">Introducción práctica a LangGraph</a>,
+      <a href="https://datalensjourna.com/index.php/JDDI/article/view/35" target="_blank" rel="noopener">Artículo académico sobre LangChain &amp; LangGraph en producción</a>,
+      <a href="https://www.jangwook.net/en/blog/en/langgraph-multi-agent/" target="_blank" rel="noopener">Patrones multi-agente con LangGraph</a>.
+    </p>
+  </section>
 
-<section class="post-card">
-<h2>4. Qué probar esta semana</h2>
-<ul>
-  <li>Un flujo en Windsurf para tu repo.</li>
-  <li>Automatizar generación de tests con Codex.</li>
-  <li>Montar un RAG mínimo.</li>
-  <li>Crear tests de prompts.</li>
-</ul>
-</section>
+  <section>
+    <h2>3. MCP: el “USB-C” para conectar LLMs con tus sistemas</h2>
+    <p>
+      Otro tema muy caliente es <strong>MCP (Model Context Protocol)</strong>, un
+      estándar abierto propuesto por Anthropic que está siendo adoptado
+      por OpenAI, Microsoft y otros proveedores. La idea es simple pero
+      potente: en vez de crear integraciones ad-hoc entre cada modelo y
+      cada herramienta, defines <strong>servidores MCP</strong> (para GitHub, bases de datos,
+      APIs internas, etc.) y cualquier LLM compatible puede usarlos.
+    </p>
+    <p>
+      Dicho de forma muy burda: MCP intenta convertirse en el “USB-C de las
+      apps de IA”. Un host (por ejemplo, un IDE o un cliente de chat) habla
+      con varios servidores MCP que exponen recursos o acciones. El modelo
+      usa ese protocolo para leer, escribir y ejecutar cosas de forma
+      estándar, en lugar de miles de integraciones manuales.
+    </p>
+    <p>
+      Esto encaja muy bien con arquitecturas de microservicios: cada
+      servicio puede exponer capacidades vía MCP, y tus agentes navegan
+      el grafo de herramientas con un contrato claro. El punto delicado,
+      y donde aún hay trabajo por hacer, es la <strong>seguridad</strong>:
+      autenticación fuerte, aislamiento de contextos y defensa frente a
+      <em>prompt injection</em>. No es plug-and-play; hay que diseñar permisos
+      y límites como si fuera cualquier otra API crítica.
+    </p>
+    <p class="article-links">
+      Lecturas sugeridas sobre MCP:
+      <a href="https://www.theverge.com/2024/11/25/anthropic-model-context-protocol-data-sources" target="_blank" rel="noopener">Lanzamiento inicial de MCP</a>,
+      <a href="https://www.axios.com/2025/04/17/model-context-protocol-anthropic-open-source" target="_blank" rel="noopener">Por qué MCP está pegando fuerte</a>,
+      <a href="https://www.itpro.com/technology/artificial-intelligence/what-is-model-context-protocol-mcp" target="_blank" rel="noopener">Resumen técnico y riesgos de MCP</a>.
+    </p>
+  </section>
 
-<a class="btn" href="../index.html">← Volver al inicio</a>
+  <section>
+    <h2>4. Tu stack hoy: Windsurf + Codex como “equipo” de desarrollo</h2>
+    <p>
+      Si ya estás pagando ChatGPT y usando herramientas tipo Windsurf,
+      tiene sentido pensar en un stack concreto, no solo en “el modelo”.
+      En 2025, <strong>Codex</strong> y otros agentes de código se están consolidando como
+      piezas centrales del entorno de desarrollo.
+    </p>
+    <p>
+      Según la documentación actual de Codex y su changelog, el agente se apoya
+      en variantes de GPT-5 optimizadas para ingeniería de software, con
+      capacidades como:
+    </p>
+    <ul>
+      <li>Trabajar horas sobre un repo en una sandbox aislada.</li>
+      <li>Proponer y actualizar pull requests en GitHub.</li>
+      <li>Ejecutar tests y ajustar el código hasta que pasen.</li>
+      <li>Integrarse en terminal, IDE y flujos de CI/CD.</li>
+    </ul>
+    <p>
+      <strong>Windsurf</strong>, por su parte, funciona como un IDE pensado desde el
+      principio para agentes de IA: entiende el árbol del repo, mantiene
+      contexto de sesiones largas y se integra bien con agentes externos
+      como Codex. Una manera práctica de combinarlos:
+    </p>
+    <ul>
+      <li>Usa Windsurf como entorno principal de edición y navegación del repo.</li>
+      <li>Delega en Codex tareas más grandes: refactors extensos, migraciones, generación masiva de tests.</li>
+      <li>Configura reglas claras: nada entra a <code>main</code> sin revisión humana y, si puedes, revisado por otra persona además de ti.</li>
+    </ul>
+    <p class="article-links">
+      Más sobre Codex:
+      <a href="https://openai.com/codex/" target="_blank" rel="noopener">Página oficial de Codex</a>,
+      <a href="https://openai.com/index/introducing-codex/" target="_blank" rel="noopener">Lanzamiento original de Codex como agente de código</a>,
+      <a href="https://openai.com/index/introducing-upgrades-to-codex/" target="_blank" rel="noopener">Actualizaciones recientes (GPT-5-Codex, CLI, cloud, etc.)</a>.
+    </p>
+  </section>
 
+  <section>
+    <h2>5. Qué podrías hacer esta semana para “subirte” a este nivel</h2>
+    <p>
+      Para aterrizar todo esto, aquí van ideas muy concretas que puedes
+      aplicar ya mismo con tu stack:
+    </p>
+    <ul>
+      <li>
+        <strong>Define un pequeño conjunto de evaluaciones</strong> para tu caso de uso
+        principal (por ejemplo: responder preguntas sobre tu código o docs).
+        Guarda los ejemplos y resultados esperados en un repo.
+      </li>
+      <li>
+        <strong>Esboza un mini-grafo con LangGraph</strong> (aunque sea en pseudo-código):
+        usuario → supervisor → agente de búsqueda → agente de redacción.
+      </li>
+      <li>
+        <strong>Haz un experimento con MCP</strong>: conecta un servidor MCP a algo
+        inofensivo (por ejemplo, un repositorio de documentación) y mira
+        cómo cambia la forma de usar el modelo cuando tiene acceso directo.
+      </li>
+      <li>
+        <strong>Dedica una tarde a configurar Codex CLI</strong> sobre tu repositorio:
+        deja que haga una limpieza de warnings, formateo y pequeños bugs,
+        pero revisa todos los cambios antes de hacer merge.
+      </li>
+    </ul>
+    <p>
+      La idea es que cada semana no solo leas sobre “lo nuevo en IA”, sino
+      que <strong>incorpores una pieza tangible</strong> a tu propia infraestructura:
+      un test de prompt, un grafo sencillo, un servidor MCP de prueba,
+      un flujo automatizado con Codex… así tu sistema mejora al mismo ritmo
+      que el ecosistema.
+    </p>
+  </section>
+
+  <p style="text-align:center; margin-top:2rem;">
+    <a class="btn" href="../index.html">← Volver al inicio</a>
+  </p>
 </main>
 
 <footer>
-  <p>Generado automáticamente con ayuda de LLMs.</p>
+  <p>Generado con ayuda de LLMs y revisado para enfocarse en prácticas reales en producción.</p>
 </footer>
 
 </body>
